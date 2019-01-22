@@ -29,7 +29,7 @@ using namespace std;
 namespace proxl1PRrand 
 {
 template<typename vtype, typename itype>
-void updateGrad(int node, double& rho, double& alpha, double* q, double* grad, double* ds, double* dsinv, itype* ai, vtype* aj, double* a, vector<bool>& visited, vector<vtype>& candidates, vector<double>& norms) {
+void updateGrad(vtype node, double& rho, double& alpha, double* q, double* grad, double* ds, double* dsinv, itype* ai, vtype* aj, double* a, vector<bool>& visited, vector<vtype>& candidates, vector<double>& norms) {
     double rads = rho*alpha*ds[node];
     double ra = rho*alpha;
     double dq = -grad[node]-rads;
