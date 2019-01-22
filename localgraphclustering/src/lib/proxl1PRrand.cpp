@@ -29,17 +29,21 @@ using namespace std;
 namespace proxl1PRrand 
 {
 template<typename vtype, typename itype>
-void updateGrad(int node, double& maxNorm, double& rho, double& alpha, double* q, double* grad, double* ds, double* dsinv, itype* ai, vtype* aj, double* a, vector<bool>& visited, vector<vtype>& candidates) {
+void updateGrad(int node, double& rho, double& alpha, double* q, double* grad, double* ds, double* dsinv, itype* ai, vtype* aj, double* a, vector<bool>& visited, vector<vtype>& candidates, vector<double>& norms) {
     double rads = rho*alpha*ds[node];
+    double ra = rho*alpha;
     double dq = -grad[node]-rads;
+    double c = (1-alpha)/2;
     q[node] += dq;
-    grad[node] = -rads-(1-alpha)/2*dq;
+    grad[node] = -rads-c*dq;
 
+    double cdqdsinv = c*dq*dsinv[node];
     vtype neighbor;
     for (itype j = ai[node]; j < ai[node + 1]; ++j) {
         neighbor = aj[j];
-        grad[neighbor] -= (1-alpha)/2*dsinv[neighbor]*dq*dsinv[node];  // need further optimize
-        if (!visited[neighbor] && q[neighbor] - grad[neighbor] >= rho*alpha*ds[neighbor]) {
+        grad[neighbor] -= cdqdsinv*dsinv[neighbor];
+        norms[neighbor] = abs(grad[neighbor]*dsinv[neighbor]);
+        if (!visited[neighbor] && q[neighbor] - grad[neighbor] >= ra*ds[neighbor]) {
             visited[neighbor] = true;
             candidates.push_back(neighbor);
         }
@@ -51,22 +55,24 @@ template<typename vtype, typename itype>
 vtype graph<vtype,itype>::proxl1PRrand(vtype numNodes, double epsilon, double alpha, double rho, double* q, double* d, double* ds, double* dsinv, double* grad)
 {
 	vtype not_converged = 0;
-    vtype seed = 0; // randomly choose
+    vtype seed = 3; // randomly choose
     double maxNorm = 2;
     grad[seed] = -alpha*dsinv[seed];
     maxNorm = abs(grad[seed]*dsinv[seed]);
 
     vector<vtype> candidates(1, seed);
     vector<bool> visited(numNodes, false);
+    vector<double> norms(numNodes, 0);
+    norms[seed] = maxNorm;
     visited[seed] = true;
 
     double threshold = (1+epsilon)*rho*alpha;
     while (maxNorm > threshold) {
         vtype r = rand() % candidates.size();  // TODO rand() type?
-        proxl1PRrand::updateGrad(candidates[r], maxNorm, rho, alpha, q, grad, ds, dsinv, ai, aj, a, visited, candidates);
+        proxl1PRrand::updateGrad(candidates[r], rho, alpha, q, grad, ds, dsinv, ai, aj, a, visited, candidates, norms);
         maxNorm = 0;
         for (vtype i = 0; i < numNodes; ++i) {
-            maxNorm = max(maxNorm, abs(grad[i]*dsinv[i]));
+            maxNorm = max(maxNorm, norms[i]);
         }
     }
     for (vtype i = 0; i < numNodes; ++i) {
