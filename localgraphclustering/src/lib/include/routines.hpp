@@ -122,6 +122,9 @@ public:
                         vtype maxiter,double max_time);
 
 
+    // function in proxl1PRrand.cpp
+    vtype proxl1PRrand(vtype numNodes, double epsilon, double alpha, double rho, double* q, double* d, double* ds, double* dsinv, double* grad);
+
     //functions in densest_subgraph.cpp
     double densest_subgraph(vtype *ret_set, vtype *actual_length);
     void build_list_DS(double g, vtype src, vtype dest);

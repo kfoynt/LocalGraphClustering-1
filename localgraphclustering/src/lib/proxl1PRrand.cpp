@@ -21,8 +21,9 @@
 
 
 #include <vector>
-
 #include "include/routines.hpp"
+#include "include/proxl1PRrand_c_interface.h"
+
 using namespace std;
 
 namespace proxl1PRrand 
@@ -47,10 +48,10 @@ void updateGrad(int node, double& maxNorm, double& rho, double& alpha, double* q
 }
 
 template<typename vtype, typename itype>
-vtype graph<vtype,itype>::randProxl1PRaccel(vtype numNodes, double epsilon, double alpha, double rho, double* q, double* d, double* ds, double* dsinv, double* grad)
+vtype graph<vtype,itype>::proxl1PRrand(vtype numNodes, double epsilon, double alpha, double rho, double* q, double* d, double* ds, double* dsinv, double* grad)
 {
 	vtype not_converged = 0;
-    vtype seed = 2; // randomly choose
+    vtype seed = 0; // randomly choose
     double maxNorm = 2;
     grad[seed] = -alpha*dsinv[seed];
     maxNorm = abs(grad[seed]*dsinv[seed]);
@@ -74,11 +75,29 @@ vtype graph<vtype,itype>::randProxl1PRaccel(vtype numNodes, double epsilon, doub
     return not_converged;
 }
 
-int64_t randProxl1PRaccel64(int64_t n, int64_t* ai, int64_t* aj, double* a, double alpha,
+uint32_t proxl1PRrand32(uint32_t n, uint32_t* ai, uint32_t* aj, double* a, double alpha,
+                         double rho, uint32_t* v, uint32_t v_nums, double* d, double* ds,
+                         double* dsinv, double epsilon, double* grad, double* p, double* y,
+                         uint32_t maxiter, uint32_t offset, double max_time)
+{
+    graph<uint32_t,uint32_t> g(ai[n],n,ai,aj,a,offset,NULL);
+    return g.proxl1PRrand(n, epsilon, alpha, rho, p, d, ds, dsinv, grad);
+}
+
+int64_t proxl1PRrand64(int64_t n, int64_t* ai, int64_t* aj, double* a, double alpha,
                         double rho, int64_t* v, int64_t v_nums, double* d, double* ds,
                         double* dsinv,double epsilon, double* grad, double* p, double* y,
-                        int64_t maxiter, int64_t offset,double max_time)
+                        int64_t maxiter, int64_t offset, double max_time)
 {
     graph<int64_t,int64_t> g(ai[n],n,ai,aj,a,offset,NULL);
-    return g.randProxl1PRaccel(n, epsilon, alpha, rho, p, d, ds, dsinv, grad);
+    return g.proxl1PRrand(n, epsilon, alpha, rho, p, d, ds, dsinv, grad);
+}
+
+uint32_t proxl1PRrand32_64(uint32_t n, int64_t* ai, uint32_t* aj, double* a, double alpha,
+                            double rho, uint32_t* v, uint32_t v_nums, double* d, double* ds,
+                            double* dsinv, double epsilon, double* grad, double* p, double* y,
+                            uint32_t maxiter, uint32_t offset, double max_time)
+{
+    graph<uint32_t,int64_t> g(ai[n],n,ai,aj,a,offset,NULL);
+    return g.proxl1PRrand(n, epsilon, alpha, rho, p, d, ds, dsinv, grad);
 }
