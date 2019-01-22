@@ -21,6 +21,7 @@
 
 
 #include <vector>
+#include <cmath>
 #include "include/routines.hpp"
 #include "include/proxl1PRrand_c_interface.h"
 
