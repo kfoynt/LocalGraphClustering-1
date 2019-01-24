@@ -30,7 +30,7 @@ using namespace std;
 namespace proxl1PRrand 
 {
 template<typename vtype, typename itype>
-void updateGrad(vtype node, double& rho, double& alpha, double* q, double* grad, double* ds, double* dsinv, itype* ai, vtype* aj, double* a, vector<bool>& visited, vector<vtype>& candidates, vector<double>& norms) {
+void updateGrad(vtype node, double& rho, double& alpha, double* q, double* grad, double* ds, double* dsinv, itype* ai, vtype* aj, vector<bool>& visited, vector<vtype>& candidates, vector<double>& norms) {
     double rads = rho*alpha*ds[node];
     double ra = rho*alpha;
     double dq = -grad[node]-rads;
@@ -50,6 +50,12 @@ void updateGrad(vtype node, double& rho, double& alpha, double* q, double* grad,
         }
     }
 }
+/*
+template<typename vtype, typename itype>
+vector<vtype> getQdiag(vtype numNodes, itype* ai, vtype* aj, double* a, ) {
+
+}
+*/
 }
 
 template<typename vtype, typename itype>
@@ -70,7 +76,7 @@ vtype graph<vtype,itype>::proxl1PRrand(vtype numNodes, double epsilon, double al
     double threshold = (1+epsilon)*rho*alpha;
     while (maxNorm > threshold) {
         vtype r = rand() % candidates.size();  // TODO rand() type?
-        proxl1PRrand::updateGrad(candidates[r], rho, alpha, q, grad, ds, dsinv, ai, aj, a, visited, candidates, norms);
+        proxl1PRrand::updateGrad(candidates[r], rho, alpha, q, grad, ds, dsinv, ai, aj, visited, candidates, norms);
         maxNorm = 0;
         for (vtype i = 0; i < numNodes; ++i) {
             maxNorm = max(maxNorm, norms[i]);
