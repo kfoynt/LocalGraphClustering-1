@@ -50,12 +50,24 @@ void updateGrad(vtype node, double& rho, double& alpha, double* q, double* grad,
         }
     }
 }
-/*
-template<typename vtype, typename itype>
-vector<vtype> getQdiag(vtype numNodes, itype* ai, vtype* aj, double* a, ) {
 
+template<typename vtype, typename itype>
+vector<vtype> getQdiag(vtype numNodes, itype* ai, vtype* aj, double* d, double alpha) {
+    vector<vtype> Qdiag(numNodes);
+    vector<bool> Adiag(numNodes, false);
+
+    for (vtype node = 0; node < numNodes; ++node) {
+        itype idx = ai[node];
+        while (idx < ai[node + 1] && aj[idx] < node) ++idx;
+        Adiag[node] = idx < ai[node + 1] && aj[idx] == node;
+    }
+
+    double c = (1 - alpha) / 2;
+    for (vtype node = 0; node < numNodes; ++node) {
+        Qdiag[node] = 1 - c * (1 - Adiag[node]) / d[node];
+    }
+    return Qdiag;
 }
-*/
 }
 
 template<typename vtype, typename itype>
