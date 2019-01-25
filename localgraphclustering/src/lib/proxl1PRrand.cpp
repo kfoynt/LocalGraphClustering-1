@@ -81,8 +81,28 @@ void writeLog(vtype numNodes, const string& fname, double* q) {
             file << q[i] << ',';
         }
         file << '\n';
+        file.close();
     }
-    return;
+}
+
+template<typename vtype, typename itype>
+void writeGraph(vtype numNodes, const string& fname, itype* ai, vtype* aj) {
+    ofstream file(fname);
+    if (file.is_open()) {
+        itype idx = 0;
+        for (vtype node = 0; node < numNodes; ++node) {
+            for (vtype neighbor = 0; neighbor < numNodes; ++neighbor) {
+                if (idx < ai[node + 1] && aj[idx] == neighbor) {
+                    ++idx;
+                    file << 1 << ',';
+                } else {
+                    file << 0 << ',';
+                }
+            }
+            file << '\n';
+        }
+        file.close();
+    }
 }
 }
 
@@ -101,6 +121,7 @@ vtype graph<vtype,itype>::proxl1PRrand(vtype numNodes, double epsilon, double al
     norms[seed] = maxNorm;
     visited[seed] = true;
     // exp start
+    proxl1PRrand::writeGraph(numNodes, "../../../../../logs/graph.txt", ai, aj);
     vector<double> Qdiag = proxl1PRrand::getQdiag(numNodes, ai, aj, d, alpha);
     cout << "Q diagnal: ";
     for (double v : Qdiag)
