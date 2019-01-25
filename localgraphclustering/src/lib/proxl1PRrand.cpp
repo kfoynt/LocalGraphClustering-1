@@ -20,6 +20,10 @@
  */
 
 
+// start include write data to files
+#include <iostream>
+#include <fstream>
+// end
 #include <vector>
 #include <cmath>
 #include "include/routines.hpp"
@@ -31,14 +35,14 @@ namespace proxl1PRrand
 {
 template<typename vtype, typename itype>
 void updateGrad(vtype node, double& rho, double& alpha, double* q, double* grad, double* ds, double* dsinv, itype* ai, vtype* aj, vector<bool>& visited, vector<vtype>& candidates, vector<double>& norms) {
-    double rads = rho*alpha*ds[node];
-    double ra = rho*alpha;
-    double dq = -grad[node]-rads;
     double c = (1-alpha)/2;
+    double ra = rho*alpha;
+    double rads = rho*alpha*ds[node];
+    double dq = -grad[node]-rads;
+    double cdqdsinv = c*dq*dsinv[node];
     q[node] += dq;
     grad[node] = -rads-c*dq;
 
-    double cdqdsinv = c*dq*dsinv[node];
     vtype neighbor;
     for (itype j = ai[node]; j < ai[node + 1]; ++j) {
         neighbor = aj[j];
@@ -52,8 +56,8 @@ void updateGrad(vtype node, double& rho, double& alpha, double* q, double* grad,
 }
 
 template<typename vtype, typename itype>
-vector<vtype> getQdiag(vtype numNodes, itype* ai, vtype* aj, double* d, double alpha) {
-    vector<vtype> Qdiag(numNodes);
+vector<double> getQdiag(vtype numNodes, itype* ai, vtype* aj, double* d, double alpha) {
+    vector<double> Qdiag(numNodes);
     vector<bool> Adiag(numNodes, false);
 
     for (vtype node = 0; node < numNodes; ++node) {
@@ -64,9 +68,21 @@ vector<vtype> getQdiag(vtype numNodes, itype* ai, vtype* aj, double* d, double a
 
     double c = (1 - alpha) / 2;
     for (vtype node = 0; node < numNodes; ++node) {
-        Qdiag[node] = 1 - c * (1 - Adiag[node]) / d[node];
+        Qdiag[node] = 1.0 - c - c * Adiag[node] / d[node];
     }
     return Qdiag;
+}
+
+template<typename vtype>
+void writeLog(vtype numNodes, const string& fname, double* q) {
+    ofstream file(fname, fstream::app);
+    if (file.is_open()) {
+        for (vtype i = 0; i < numNodes; ++i) {
+            file << q[i] << ',';
+        }
+        file << '\n';
+    }
+    return;
 }
 }
 
@@ -84,11 +100,20 @@ vtype graph<vtype,itype>::proxl1PRrand(vtype numNodes, double epsilon, double al
     vector<double> norms(numNodes, 0);
     norms[seed] = maxNorm;
     visited[seed] = true;
-
+    // exp start
+    vector<double> Qdiag = proxl1PRrand::getQdiag(numNodes, ai, aj, d, alpha);
+    cout << "Q diagnal: ";
+    for (double v : Qdiag)
+        cout << v << ", ";
+    cout << endl;
+    // exp end
     double threshold = (1+epsilon)*rho*alpha;
     while (maxNorm > threshold) {
         vtype r = rand() % candidates.size();  // TODO rand() type?
         proxl1PRrand::updateGrad(candidates[r], rho, alpha, q, grad, ds, dsinv, ai, aj, visited, candidates, norms);
+        // write q for analysis
+        proxl1PRrand::writeLog(numNodes, "../../../../../logs/test.txt", q);
+        // end
         maxNorm = 0;
         for (vtype i = 0; i < numNodes; ++i) {
             maxNorm = max(maxNorm, norms[i]);
